@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة التحكم الشخصية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base:       #0d1117;
+    --bg-card:       rgba(22, 27, 34, 0.85);
+    --bg-card-hover: rgba(30, 38, 50, 0.95);
+    --border:        rgba(255,255,255,0.07);
+    --border-glow:   rgba(99,179,237,0.25);
+    --text-primary:  #e6edf3;
+    --text-muted:    #8b949e;
+    --text-dim:      #484f58;
+    --accent-blue:   #63b3ed;
+    --accent-green:  #56d364;
+    --accent-amber:  #f0c040;
+    --accent-pink:   #f78cba;
+    --accent-purple: #a78bfa;
+    --accent-teal:   #4fd1c5;
+    --radius:        14px;
+    --radius-sm:     8px;
+    --shadow:        0 8px 32px rgba(0,0,0,0.45);
+    --shadow-sm:     0 2px 12px rgba(0,0,0,0.3);
+    --transition:    all 0.22s cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background mesh ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 15%, rgba(99,179,237,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 85%, rgba(167,139,250,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 60% 40%, rgba(86,211,100,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 64px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── TopBar ── */
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+    gap: 16px;
+  }
+
+  .topbar-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 1.05rem; letter-spacing: 0.01em;
+    color: var(--text-primary);
+  }
+  .topbar-brand .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.3); }
+  }
+
+  .topbar-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; color: var(--text-muted);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .topbar-clock span { color: var(--accent-blue); }
+
+  .topbar-search {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 6px 14px;
+    flex: 1; max-width: 340px;
+  }
+  .topbar-search input {
+    background: none; border: none; outline: none;
+    color: var(--text-primary); font-family: 'Cairo', sans-serif;
+    font-size: 0.9rem; width: 100%;
+  }
+  .topbar-search input::placeholder { color: var(--text-dim); }
+  .topbar-search svg { color: var(--text-dim); flex-shrink: 0; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-left: 1px solid var(--border);
+    background: rgba(13,17,23,0.75);
+    backdrop-filter: blur(16px);
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 64px; height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section-label {
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-dim);
+    padding: 12px 12px 4px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.88rem; font-weight: 500;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border);
+  }
+  .nav-item.active { color: var(--accent-blue); }
+  .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+  .nav-item .badge {
+    margin-right: auto;
+    background: var(--accent-blue);
+    color: #fff; font-size: 0.65rem; font-weight: 700;
+    padding: 1px 6px; border-radius: 20px;
+  }
+
+  /* ── Main ── */
+  .main {
+    padding: 28px;
+    overflow-y: auto;
+  }
+
+  /* ── Section ── */
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .section-title {
+    font-size: 1.3rem; font-weight: 800;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .icon { font-size: 1.2rem; }
+
+  /* ── Grid layouts ── */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── App Card ── */
+  .app-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none; color: inherit;
+    backdrop-filter: blur(8px);
+    position: relative; overflow: hidden;
+  }
+  .app-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--card-accent, transparent);
+    opacity: 0.04;
+    transition: opacity 0.22s;
+  }
+  .app-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .app-card:hover::before { opacity: 0.09; }
+
+  .app-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .app-info { flex: 1; min-width: 0; }
+  .app-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+  .app-desc { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .app-arrow {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    transition: var(--transition);
+  }
+  .app-card:hover .app-arrow { color: var(--accent-blue); transform: translateX(-4px); }
+
+  /* ── Notes ── */
+  .notes-toolbar {
+    display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text-primary);
+    font-family: 'Cairo', sans-serif; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: var(--transition);
+  }
+  .btn:hover { background: var(--bg-card-hover); border-color: var(--border-glow); }
+  .btn.primary { background: rgba(99,179,237,0.15); border-color: rgba(99,179,237,0.4); color: var(--accent-blue); }
+  .btn.danger { background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.3); color: #f85149; }
+
+  .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 14px; }
+
+  .note-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+    position: relative;
+  }
+  .note-card:hover { border-color: var(--border-glow); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .note-card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px; gap: 8px;
+  }
+  .note-title-input {
+    background: none; border: none; outline: none;
+    color: var(--text-primary); font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem; font-weight: 700; width: 100%;
+  }
+  .note-body-input {
+    background: none; border: none; outline: none;
+    color: var(--text-muted); font-family: 'Cairo', sans-serif;
+    font-size: 0.83rem; width: 100%; resize: none; min-height: 70px;
+    line-height: 1.6;
+  }
+  .note-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-dim); font-size: 0.85rem;
+    padding: 2px 5px; border-radius: 4px;
+    transition: var(--transition); flex-shrink: 0;
+  }
+  .note-del:hover { color: #f85149; background: rgba(248,81,73,0.1); }
+  .note-tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; margin-top: 8px;
+    background: rgba(99,179,237,0.12); color: var(--accent-blue);
+  }
+
+  .add-note-card {
+    background: rgba(255,255,255,0.02);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    align-items: stretch;
+  }
+  .add-note-card input, .add-note-card textarea {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-family: 'Cairo', sans-serif; font-size: 0.88rem;
+    outline: none; transition: var(--transition);
+    width: 100%;
+  }
+  .add-note-card input:focus, .add-note-card textarea:focus {
+    border-color: rgba(99,179,237,0.4);
+  }
+  .add-note-card textarea { resize: vertical; min-height: 80px; }
+
+  /* ── Widgets row ── */
+  .widgets-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .widget {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+  }
+  .widget:hover { border-color: var(--border-glow); }
+  .widget-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 10px; }
+  .widget-value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+  .widget-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* ── Quick Links ── */
+  .quick-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    text-decoration: none; color: var(--text-muted);
+    font-size: 0.82rem; font-weight: 600;
+    transition: var(--transition); margin: 4px;
+  }
+  .quick-pill:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-glow);
+    transform: translateY(-1px);
+  }
+
+  /* ── Tag chip ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+  }
+
+  /* ── Divider ── */
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+    background: rgba(30,38,50,0.98);
+    border: 1px solid var(--border-glow);
+    color: var(--text-primary);
+    padding: 10px 22px; border-radius: 40px;
+    font-size: 0.88rem; font-weight: 600;
+    backdrop-filter: blur(12px);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    z-index: 9999; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Fade in ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(14px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .anim { animation: fadeUp 0.4s ease forwards; }
+  .anim-2 { animation: fadeUp 0.4s 0.07s ease both; }
+  .anim-3 { animation: fadeUp 0.4s 0.14s ease both; }
+
+  /* ── Color indicators ── */
+  .c-twitter  { --card-accent: #1da1f2; }
+  .c-instagram { --card-accent: #e1306c; }
+  .c-linkedin  { --card-accent: #0077b5; }
+  .c-youtube   { --card-accent: #ff0000; }
+  .c-tiktok    { --card-accent: #69c9d0; }
+  .c-github    { --card-accent: #f0f6fc; }
+  .c-gmail     { --card-accent: #ea4335; }
+  .c-drive     { --card-accent: #4285f4; }
+  .c-calendar  { --card-accent: #34a853; }
+  .c-meet      { --card-accent: #00bcd4; }
+  .c-reddit    { --card-accent: #ff4500; }
+  .c-snapchat  { --card-accent: #fffc00; }
+  .c-pinterest { --card-accent: #e60023; }
+  .c-discord   { --card-accent: #5865f2; }
+  .c-telegram  { --card-accent: #26a5e4; }
+  .c-whatsapp  { --card-accent: #25d366; }
+
+  /* ── Settings ── */
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+  .settings-row:hover { border-color: var(--border-glow); }
+  .settings-label { font-size: 0.9rem; font-weight: 600; }
+  .settings-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+  .toggle {
+    width: 42px; height: 24px;
+    background: var(--text-dim);
+    border-radius: 12px;
+    position: relative; cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent-blue); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; right: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(-18px); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .widgets-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── TopBar ── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="dot"></span>
+      لوحتي الشخصية
+    </div>
+    <div class="topbar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="globalSearch" placeholder="ابحث في الشبكات أو الملاحظات..." />
+    </div>
+    <div class="topbar-clock">
+      <span id="clockDate"></span>
+      <span id="clockTime"></span>
+    </div>
+  </header>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">القائمة</div>
+    <div class="nav-item active" onclick="show('home',this)">
+      <span class="nav-icon">🏠</span> الرئيسية
+    </div>
+    <div class="nav-item" onclick="show('social',this)">
+      <span class="nav-icon">📱</span> التواصل الاجتماعي
+    </div>
+    <div class="nav-item" onclick="show('google',this)">
+      <span class="nav-icon">🔵</span> Google Workspace
+    </div>
+    <div class="nav-item" onclick="show('notes',this)">
+      <span class="nav-icon">📝</span> الملاحظات
+      <span class="badge" id="notesBadge">0</span>
+    </div>
+    <div class="nav-item" onclick="show('settings',this)">
+      <span class="nav-icon">⚙️</span> الإعدادات
+    </div>
+
+    <div class="divider"></div>
+    <div class="sidebar-section-label">وصول سريع</div>
+
+    <a class="nav-item" href="https://gmail.com" target="_blank">
+      <span class="nav-icon">📧</span> Gmail
+    </a>
+    <a class="nav-item" href="https://drive.google.com" target="_blank">
+      <span class="nav-icon">💾</span> Drive
+    </a>
+    <a class="nav-item" href="https://x.com" target="_blank">
+      <span class="nav-icon">𝕏</span> X / Twitter
+    </a>
+    <a class="nav-item" href="https://instagram.com" target="_blank">
+      <span class="nav-icon">📸</span> Instagram
+    </a>
+    <a class="nav-item" href="https://youtube.com" target="_blank">
+      <span class="nav-icon">▶️</span> YouTube
+    </a>
+    <a class="nav-item" href="https://github.com" target="_blank">
+      <span class="nav-icon">🐙</span> GitHub
+    </a>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main class="main">
+
+    <!-- ════════ HOME ════════ -->
+    <div class="section visible" id="sec-home">
+
+      <div class="widgets-row anim">
+        <div class="widget">
+          <div class="widget-title">📱 الشبكات</div>
+          <div class="widget-value" id="wSocial">10</div>
+          <div class="widget-sub">شبكة اجتماعية متصلة</div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">📝 الملاحظات</div>
+          <div class="widget-value" id="wNotes">0</div>
+          <div class="widget-sub">ملاحظة محفوظة</div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">🌐 Google Apps</div>
+          <div class="widget-value">6</div>
+          <div class="widget-sub">تطبيقات متاحة</div>
+        </div>
+      </div>
+
+      <!-- Quick pills -->
+      <div class="section-header anim-2">
+        <h2 class="section-title"><span class="icon">⚡</span> وصول فوري</h2>
+      </div>
+      <div style="margin-bottom:24px;" class="anim-2">
+        <a class="quick-pill" href="https://gmail.com" target="_blank">📧 Gmail</a>
+        <a class="quick-pill" href="https://drive.google.com" target="_blank">💾 Drive</a>
+        <a class="quick-pill" href="https://calendar.google.com" target="_blank">📅 Calendar</a>
+        <a class="quick-pill" href="https://x.com" target="_blank">𝕏 Twitter</a>
+        <a class="quick-pill" href="https://instagram.com" target="_blank">📸 Instagram</a>
+        <a class="quick-pill" href="https://youtube.com" target="_blank">▶️ YouTube</a>
+        <a class="quick-pill" href="https://linkedin.com" target="_blank">💼 LinkedIn</a>
+        <a class="quick-pill" href="https://github.com" target="_blank">🐙 GitHub</a>
+        <a class="quick-pill" href="https://discord.com" target="_blank">🎮 Discord</a>
+        <a class="quick-pill" href="https://web.telegram.org" target="_blank">✈️ Telegram</a>
+      </div>
+
+      <!-- Recent notes preview -->
+      <div class="section-header anim-3">
+        <h2 class="section-title"><span class="icon">📝</span> آخر الملاحظات</h2>
+        <button class="btn" onclick="show('notes', document.querySelector('.nav-item:nth-child(5)'))">عرض الكل</button>
+      </div>
+      <div class="notes-grid anim-3" id="homeNotePreview"></div>
+    </div>
+
+    <!-- ════════ SOCIAL ════════ -->
+    <div class="section" id="sec-social">
+      <div class="section-header anim">
+        <h2 class="section-title"><span class="icon">📱</span> وسائل التواصل الاجتماعي</h2>
+      </div>
+
+      <p style="color:var(--text-muted); font-size:.85rem; margin-bottom:20px;" class="anim">
+        انقر على أي بطاقة للانتقال مباشرة إلى المنصة
+      </p>
+
+      <div class="grid-3 anim-2" id="socialGrid"></div>
+    </div>
+
+    <!-- ════════ GOOGLE ════════ -->
+    <div class="section" id="sec-google">
+      <div class="section-header anim">
+        <h2 class="section-title"><span class="icon">🔵</span> Google Workspace</h2>
+      </div>
+      <div class="grid-3 anim-2" id="googleGrid"></div>
+    </div>
+
+    <!-- ════════ NOTES ════════ -->
+    <div class="section" id="sec-notes">
+      <div class="section-header anim">
+        <h2 class="section-title"><span class="icon">📝</span> الملاحظات والتخطيط</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn primary" onclick="clearNotes()">مسح الكل</button>
+        </div>
+      </div>
+
+      <!-- Add note form -->
+      <div class="add-note-card anim-2" style="margin-bottom:20px;">
+        <input id="nTitle" type="text" placeholder="📌 عنوان الملاحظة...">
+        <textarea id="nBody" placeholder="✍️ اكتب ملاحظتك هنا..."></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="nTag" type="text" placeholder="وسم (اختياري)" style="flex:1;min-width:120px;">
+          <button class="btn primary" onclick="addNote()" style="white-space:nowrap;">➕ إضافة ملاحظة</button>
+        </div>
+      </div>
+
+      <div class="notes-grid anim-3" id="notesGrid"></div>
+    </div>
+
+    <!-- ════════ SETTINGS ════════ -->
+    <div class="section" id="sec-settings">
+      <div class="section-header anim">
+        <h2 class="section-title"><span class="icon">⚙️</span> الإعدادات والتخصيص</h2>
+      </div>
+
+      <div class="anim-2">
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">إضافة شبكة اجتماعية</div>
+            <div class="settings-desc">أضف رابطًا مخصصًا لأي منصة</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:20px;align-items:end;">
+          <div>
+            <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">اسم المنصة</label>
+            <input class="add-note-card input" id="cName" type="text" placeholder="مثال: Threads" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text-primary);font-family:'Cairo',sans-serif;outline:none;width:100%;">
+          </div>
+          <div>
+            <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">الرابط</label>
+            <input class="add-note-card input" id="cUrl" type="text" placeholder="https://threads.net" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text-primary);font-family:'Cairo',sans-serif;outline:none;width:100%;">
+          </div>
+          <div>
+            <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">الأيقونة</label>
+            <input class="add-note-card input" id="cIcon" type="text" placeholder="🔗" maxlength="4" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text-primary);font-family:'Cairo',sans-serif;outline:none;width:60px;text-align:center;">
+          </div>
+        </div>
+        <button class="btn primary" onclick="addCustomApp()">➕ إضافة للوحة</button>
+
+        <div class="divider"></div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">🌐 اللغة</div>
+            <div class="settings-desc">العربية (قابل للتعديل في الكود)</div>
+          </div>
+          <span class="chip" style="background:rgba(99,179,237,0.1);color:var(--accent-blue);">AR 🇸🇦</span>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">💾 التخزين</div>
+            <div class="settings-desc">الملاحظات محفوظة في المتصفح (localStorage)</div>
+          </div>
+          <span class="chip" style="background:rgba(86,211,100,0.1);color:var(--accent-green);">نشط ✓</span>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">🚀 الاستضافة المجانية</div>
+            <div class="settings-desc">ارفع dashboard.html على GitHub → Settings → Pages</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(99,179,237,0.06);border:1px solid rgba(99,179,237,0.15);border-radius:12px;padding:16px;margin-top:16px;">
+          <div style="font-weight:700;margin-bottom:8px;font-size:.9rem;">📖 تعليمات الاستضافة على GitHub Pages</div>
+          <ol style="color:var(--text-muted);font-size:.82rem;line-height:2;padding-right:18px;">
+            <li>حمّل الملف <code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">dashboard.html</code></li>
+            <li>أنشئ مستودعًا جديدًا على GitHub (يفضّل اسم: <code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">dashboard</code>)</li>
+            <li>ارفع الملف وسمّه <code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">index.html</code></li>
+            <li>اذهب إلى Settings → Pages → Source: main branch → Save</li>
+            <li>سيكون الرابط: <code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">username.github.io/dashboard</code></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast">✓ تم الحفظ!</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const SOCIAL_APPS = [
+  { name:'X / Twitter',  desc:'منصة التدوين المصغر',        icon:'𝕏', url:'https://x.com',          cls:'c-twitter' },
+  { name:'Instagram',    desc:'الصور والفيديوهات القصيرة', icon:'📸', url:'https://instagram.com',   cls:'c-instagram' },
+  { name:'LinkedIn',     desc:'الشبكة المهنية',             icon:'💼', url:'https://linkedin.com',   cls:'c-linkedin' },
+  { name:'YouTube',      desc:'منصة الفيديو الأولى',        icon:'▶️', url:'https://youtube.com',    cls:'c-youtube' },
+  { name:'TikTok',       desc:'الفيديوهات القصيرة',         icon:'🎵', url:'https://tiktok.com',     cls:'c-tiktok' },
+  { name:'GitHub',       desc:'منصة المطورين',               icon:'🐙', url:'https://github.com',     cls:'c-github' },
+  { name:'Reddit',       desc:'مجتمعات المحتوى',             icon:'🔴', url:'https://reddit.com',     cls:'c-reddit' },
+  { name:'Discord',      desc:'المجتمعات والألعاب',          icon:'🎮', url:'https://discord.com',    cls:'c-discord' },
+  { name:'Telegram',     desc:'المراسلة السريعة',            icon:'✈️', url:'https://web.telegram.org', cls:'c-telegram' },
+  { name:'WhatsApp Web', desc:'المراسلة الفورية',            icon:'💬', url:'https://web.whatsapp.com', cls:'c-whatsapp' },
+];
+
+const GOOGLE_APPS = [
+  { name:'Gmail',         desc:'البريد الإلكتروني',          icon:'📧', url:'https://gmail.com',               cls:'c-gmail' },
+  { name:'Google Drive',  desc:'التخزين السحابي',            icon:'💾', url:'https://drive.google.com',        cls:'c-drive' },
+  { name:'Google Calendar', desc:'التقويم والتخطيط',         icon:'📅', url:'https://calendar.google.com',    cls:'c-calendar' },
+  { name:'Google Meet',   desc:'اجتماعات الفيديو',           icon:'🎥', url:'https://meet.google.com',         cls:'c-meet' },
+  { name:'Google Docs',   desc:'محرر المستندات',             icon:'📄', url:'https://docs.google.com',         cls:'c-drive' },
+  { name:'Google Keep',   desc:'الملاحظات السريعة',          icon:'🟡', url:'https://keep.google.com',         cls:'c-calendar' },
+];
+
+// ── Custom apps from localStorage ──
+let customApps = JSON.parse(localStorage.getItem('customApps') || '[]');
+
+// ── Notes ──
+let notes = JSON.parse(localStorage.getItem('notes') || '[]');
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderAppCard(app) {
+  return `
+    <a href="${app.url}" target="_blank" rel="noopener" class="app-card ${app.cls || ''}">
+      <div class="app-icon">${app.icon}</div>
+      <div class="app-info">
+        <div class="app-name">${app.name}</div>
+        <div class="app-desc">${app.desc}</div>
+      </div>
+      <span class="app-arrow">←</span>
+    </a>`;
+}
+
+function renderAll() {
+  const allSocial = [...SOCIAL_APPS, ...customApps];
+  document.getElementById('socialGrid').innerHTML = allSocial.map(renderAppCard).join('');
+  document.getElementById('googleGrid').innerHTML = GOOGLE_APPS.map(renderAppCard).join('');
+  renderNotes();
+  document.getElementById('wSocial').textContent = allSocial.length;
+}
+
+// ══════════════════════════════════════════════
+//  NOTES
+// ══════════════════════════════════════════════
+function saveNotes() {
+  localStorage.setItem('notes', JSON.stringify(notes));
+  const count = notes.length;
+  document.getElementById('wNotes').textContent = count;
+  document.getElementById('notesBadge').textContent = count;
+}
+
+function renderNotes() {
+  const grid = document.getElementById('notesGrid');
+  const preview = document.getElementById('homeNotePreview');
+  const count = notes.length;
+  document.getElementById('wNotes').textContent = count;
+  document.getElementById('notesBadge').textContent = count;
+
+  if (count === 0) {
+    grid.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;">لا توجد ملاحظات بعد. أضف ملاحظتك الأولى! 📝</p>';
+    preview.innerHTML = '<p style="color:var(--text-muted);font-size:.82rem;">لا توجد ملاحظات حتى الآن.</p>';
+    return;
+  }
+
+  const cards = notes.map((n,i) => `
+    <div class="note-card">
+      <div class="note-card-header">
+        <input class="note-title-input" value="${esc(n.title)}" onchange="notes[${i}].title=this.value;saveNotes();" placeholder="العنوان...">
+        <button class="note-del" onclick="deleteNote(${i})">✕</button>
+      </div>
+      <textarea class="note-body-input" onchange="notes[${i}].body=this.value;saveNotes();">${esc(n.body)}</textarea>
+      ${n.tag ? `<span class="note-tag"># ${esc(n.tag)}</span>` : ''}
+      <div style="font-size:.68rem;color:var(--text-dim);margin-top:8px;">${n.date || ''}</div>
+    </div>`).join('');
+
+  grid.innerHTML = cards;
+  preview.innerHTML = notes.slice(0,3).map((n,i) => `
+    <div class="note-card">
+      <div class="note-card-header">
+        <div style="font-weight:700;font-size:.9rem;">${esc(n.title) || 'ملاحظة'}</div>
+      </div>
+      <div style="color:var(--text-muted);font-size:.82rem;line-height:1.6;">${esc(n.body).slice(0,100)}${n.body.length>100?'…':''}</div>
+      ${n.tag ? `<span class="note-tag"># ${esc(n.tag)}</span>` : ''}
+    </div>`).join('');
+}
+
+function esc(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addNote() {
+  const title = document.getElementById('nTitle').value.trim();
+  const body  = document.getElementById('nBody').value.trim();
+  const tag   = document.getElementById('nTag').value.trim();
+  if (!title && !body) return toast('⚠️ اكتب شيئًا أولًا!');
+  notes.unshift({
+    title: title || 'ملاحظة',
+    body,
+    tag,
+    date: new Date().toLocaleDateString('ar-SA')
+  });
+  saveNotes();
+  renderNotes();
+  document.getElementById('nTitle').value = '';
+  document.getElementById('nBody').value  = '';
+  document.getElementById('nTag').value   = '';
+  toast('✓ تمت الإضافة!');
+}
+
+function deleteNote(i) {
+  notes.splice(i, 1);
+  saveNotes();
+  renderNotes();
+}
+
+function clearNotes() {
+  if (!notes.length) return;
+  if (confirm('هل تريد حذف جميع الملاحظات؟')) {
+    notes = [];
+    saveNotes();
+    renderNotes();
+    toast('🗑 تم المسح');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CUSTOM APPS
+// ══════════════════════════════════════════════
+function addCustomApp() {
+  const name = document.getElementById('cName').value.trim();
+  const url  = document.getElementById('cUrl').value.trim();
+  const icon = document.getElementById('cIcon').value.trim() || '🔗';
+  if (!name || !url) return toast('⚠️ أدخل الاسم والرابط');
+  customApps.push({ name, url, icon, desc: 'تطبيق مخصص' });
+  localStorage.setItem('customApps', JSON.stringify(customApps));
+  renderAll();
+  document.getElementById('cName').value = '';
+  document.getElementById('cUrl').value  = '';
+  document.getElementById('cIcon').value = '';
+  toast('✓ تمت الإضافة للوحة!');
+}
+
+// ══════════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════════
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('visible');
+  if (el) el.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ar-SA', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const dateStr = now.toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('clockTime').textContent = timeStr;
+  document.getElementById('clockDate').textContent = dateStr;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ══════════════════════════════════════════════
+//  SEARCH
+// ══════════════════════════════════════════════
+document.getElementById('globalSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) { renderAll(); return; }
+  const all = [...SOCIAL_APPS, ...customApps, ...GOOGLE_APPS];
+  const filtered = all.filter(a => a.name.toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q));
+  document.getElementById('socialGrid').innerHTML = filtered.map(renderAppCard).join('') || '<p style="color:var(--text-muted);">لا توجد نتائج</p>';
+  document.getElementById('googleGrid').innerHTML = '';
+  show('social', null);
+});
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+renderAll();
+</script>
+</body>
+</html>
